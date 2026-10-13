@@ -1,0 +1,14 @@
+{
+  "item.sololeveling.system_key": "System Key",
+  "creativetab.sololeveling.solo_leveling_tab": "Solo Leveling",
+  "attribute.sololeveling.max_mana": "Max Mana",
+  "attribute.sololeveling.mana_regen": "Mana Regeneration",
+  "attribute.sololeveling.max_stamina": "Max Stamina",
+  "attribute.sololeveling.stamina_regen": "Stamina Regeneration",
+  "attribute.sololeveling.max_equip_load": "Max Equip Load",
+  "attribute.sololeveling.poise": "Poise",
+  "attribute.sololeveling.effect_resistance": "Effect Resistance",
+  "attribute.sololeveling.physical_damage_reduction": "Physical Damage Reduction",
+  "key.categories.sololeveling": "Solo Leveling",
+  "key.sololeveling.open_panel": "Open System Panel"
+}
