@@ -12,9 +12,10 @@ public final class StatFormulas {
     private static final double STAMINA_BASE          = 100.0;
     private static final double STAMINA_PER_DUR       = 0.25;
     private static final double MANA_BASE             = 20.0;
+    private static final double MANA_REGEN_BASE       = 1.0;
     private static final double MANA_PER_INT          = 0.5;
     private static final double MANA_REGEN_PER_INT    = 0.02;
-    private static final double STAMINA_REGEN_BASE    = 25.0;
+    private static final double STAMINA_REGEN_BASE    = 15.0;  // = the staminaRegenBase default in Config
     private static final double STAMINA_REGEN_PER_AGI = 0.05;
     private static final double ATTACK_SPD_PER_AGI    = 0.005;
     private static final double MOVE_SPD_PER_AGI      = 0.002;
@@ -40,7 +41,7 @@ public final class StatFormulas {
         return MANA_BASE + SoftCap.effective(intel, rank) * MANA_PER_INT;
     }
     public static double manaRegen(int intel, Rank rank) {
-        return SoftCap.effective(intel, rank) * MANA_REGEN_PER_INT;
+        return MANA_REGEN_BASE + SoftCap.effective(intel, rank) * MANA_REGEN_PER_INT;
     }
     public static double staminaRegen(int agi, Rank rank, EquipmentLoadState state) {
         double effAgi = SoftCap.effective(agi, rank);

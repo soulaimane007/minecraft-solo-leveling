@@ -14,5 +14,7 @@ public class SLClientSetup {
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
         // Register our HUD above the vanilla hotbar layer
         event.registerAbove(VanillaGuiLayers.HOTBAR, SLHudOverlay.ID, new SLHudOverlay());
+        // The skill / magic action bar (right edge of the screen)
+        event.registerAbove(VanillaGuiLayers.HOTBAR, ActionBarHud.ID, new ActionBarHud());
     }
 }

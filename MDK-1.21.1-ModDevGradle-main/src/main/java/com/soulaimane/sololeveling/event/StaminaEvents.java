@@ -29,7 +29,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class StaminaEvents {
 
     private static final float MELEE_COST_BASE = 16.7f;
-    private static final float JUMP_COST       = 4f;
     private static final float SYNC_EPSILON    = 0.001f;
 
     @SubscribeEvent
@@ -44,7 +43,7 @@ public class StaminaEvents {
         }
 
         double weight = getWeight(p.getMainHandItem());
-        float cost = (float)(MELEE_COST_BASE * weight / 3.0);
+        float cost = (float)(MELEE_COST_BASE * weight / Config.SERVER.staminaCostMeleeWeightDivisor.get());
         spend(p, cost);
     }
 
@@ -73,7 +72,7 @@ public class StaminaEvents {
             p.displayClientMessage(Component.literal("§c[System] Too exhausted to jump."), true);
             return;
         }
-        spend(p, JUMP_COST);
+        spend(p, Config.SERVER.staminaCostJump.get().floatValue());
     }
 
     @SubscribeEvent
@@ -117,6 +116,12 @@ public class StaminaEvents {
         boolean exhausted = d.exhausted();
         boolean changed   = false;
         boolean physicallyActive = false;   // blocks regen during sprint
+
+        // Max stamina can drop (config / stats) — never stay above it
+        if (stamina > maxSta) {
+            stamina = maxSta;
+            changed = true;
+        }
 
         // 1. Sprint drain — physicallyActive prevents same-tick regen
         if (p.isSprinting()) {

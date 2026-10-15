@@ -4,9 +4,12 @@ import com.soulaimane.sololeveling.ModAttachments;
 import com.soulaimane.sololeveling.data.EquipmentLoadState;
 import com.soulaimane.sololeveling.data.PlayerSystemData;
 import com.soulaimane.sololeveling.network.SyncPlayerDataPayload;
+import com.soulaimane.sololeveling.power.PowerSync;
 import com.soulaimane.sololeveling.registry.ModAttributes;
+import com.soulaimane.sololeveling.util.SLUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -59,19 +62,33 @@ public class PlayerDataEvents {
 
         int gained = updated.level() - old.level();
         if (gained > 0) {
+            int sp = gained * PlayerSystemData.STAT_POINTS_PER_LEVEL;
             p.sendSystemMessage(Component.literal(
                     "§6[System] §aLevel Up! §eLv." + old.level() + " §7→ §eLv." + updated.level()
-                            + " §7(+" + (gained * PlayerSystemData.STAT_POINTS_PER_LEVEL) + " SP)"));
+                            + " §7(+" + sp + " SP)"));
             if (updated.rank() != old.rank()) {
                 p.sendSystemMessage(Component.literal(
                         "§6[System] §bRank: §f" + old.rank().getSerializedName()
                                 + " §7→ §f" + updated.rank().getSerializedName()));
             }
+            SLUtil.title(p,
+                    Component.literal("§6§lLEVEL UP"),
+                    Component.literal("§eLv." + old.level() + " §7→ §eLv." + updated.level()
+                            + "   §a+" + sp + " SP  §8(press K)"),
+                    5, 40, 15);
+            SLUtil.playSound(p, "minecraft:entity.player.levelup", SoundSource.PLAYERS, 1.0f, 1.0f);
             AttributeEvents.applyAllModifiers(p);
+        } else if (amount > 0) {
+            SLUtil.actionBar(p, "§a+" + amount + " XP");
         }
         syncToClient(p);
     }
 
+    /**
+     * Sends the full system data (plus the real max mana) to the player.
+     * Also sends the skill / magic / action bar state: the number of skill points depends on the level,
+     * so every level-up and every stat change refreshes it too.
+     */
     public static void syncToClient(ServerPlayer p) {
         if (!p.hasData(ModAttachments.PLAYER_SYSTEM_DATA)) return;
         PlayerSystemData d = p.getData(ModAttachments.PLAYER_SYSTEM_DATA);
@@ -84,6 +101,9 @@ public class PlayerDataEvents {
                 .ordinal();
 
         PacketDistributor.sendToPlayer(p, SyncPlayerDataPayload.from(d, maxLoad, loadState));
+        ManaEvents.sendManaSync(p);
+        StaminaEvents.sendStaminaSync(p, d);
+        PowerSync.sync(p);
         zeroVanillaXp(p);
     }
 

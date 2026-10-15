@@ -10,25 +10,42 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 
 public class PoiseEvents {
 
-    /** Block knockback when poise is high enough. */
+    /**
+     * Poise absorbs knockback.
+     * 20 poise cancels a full-strength (1.0) knockback, a normal melee hit (0.4) needs 8.
+     * Less poise than that only reduces the knockback proportionally.
+     */
     @SubscribeEvent
     public static void onKnockback(LivingKnockBackEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
-        double poise    = getTotalPoise(p);
-        double incoming = p.getAttributeValue(Attributes.ATTACK_DAMAGE) * 2;
-        if (poise >= incoming) e.setCanceled(true);
+        float strength = e.getStrength();
+        if (strength <= 0f) return;
+
+        double poise = getTotalPoise(p);
+        if (poise <= 0.0) return;
+
+        double ratio = poise / (strength * 20.0);
+        if (ratio >= 1.0) {
+            e.setCanceled(true);
+        } else {
+            e.setStrength((float) (strength * (1.0 - ratio)));
+        }
     }
 
-    /** Defender-side: apply physical damage reduction. */
-    @SubscribeEvent
+    /**
+     * Defender-side: apply physical damage reduction.
+     * LOW priority so it runs AFTER WeaponDamageEvents has set the attacker's damage
+     * (otherwise a player-vs-player hit would overwrite the reduction).
+     */
+    @SubscribeEvent(priority = EventPriority.LOW)
     public static void onIncomingDamage(LivingIncomingDamageEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         p.setData(ModAttachments.LAST_HIT_TICK.get(), p.tickCount);

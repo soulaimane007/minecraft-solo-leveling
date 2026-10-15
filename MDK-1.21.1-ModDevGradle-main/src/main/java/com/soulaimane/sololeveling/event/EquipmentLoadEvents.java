@@ -50,6 +50,8 @@ public class EquipmentLoadEvents {
         PlayerSystemData d = p.getData(ModAttachments.PLAYER_SYSTEM_DATA);
         if (Math.abs(d.currentEquipLoad() - load) > 0.01) {
             p.setData(ModAttachments.PLAYER_SYSTEM_DATA, d.withEquipLoad(load));
+            // the new load may move the player into another load state (speed penalty)
+            AttributeEvents.applyLoadSpeed(p);
             PlayerDataEvents.syncToClient(p);
         }
     }

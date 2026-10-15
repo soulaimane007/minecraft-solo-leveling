@@ -2,10 +2,12 @@ package com.soulaimane.sololeveling.event;
 
 import com.soulaimane.sololeveling.Config;
 import com.soulaimane.sololeveling.ModAttachments;
+import com.soulaimane.sololeveling.data.EquipmentLoadState;
 import com.soulaimane.sololeveling.data.PlayerSystemData;
 import com.soulaimane.sololeveling.data.SoftCap;
 import com.soulaimane.sololeveling.registry.ModAttributes;
 import com.soulaimane.sololeveling.util.SLResource;
+import com.soulaimane.sololeveling.util.SLUtil;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,6 +36,7 @@ public class AttributeEvents {
     private static final ResourceLocation ID_DUR_DR        = SLResource.id("durability_damage_reduction");
     private static final ResourceLocation ID_DUR_EQUIP     = SLResource.id("durability_equip");
     private static final ResourceLocation ID_DUR_STAMINA   = SLResource.id("durability_stamina");
+    private static final ResourceLocation ID_LOAD_SPEED    = SLResource.id("equip_load_speed");
 
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -52,6 +55,13 @@ public class AttributeEvents {
 
     public static void applyAllModifiers(Player player) {
         PlayerSystemData d = player.getData(ModAttachments.PLAYER_SYSTEM_DATA);
+
+        // Base values come from the config, so the .toml really controls them
+        SLUtil.setBase(player, ModAttributes.MAX_MANA,     Config.SERVER.baseMana.get());
+        SLUtil.setBase(player, ModAttributes.MANA_REGEN,   Config.SERVER.manaRegenBase.get());
+        SLUtil.setBase(player, ModAttributes.MAX_STAMINA,  Config.SERVER.baseStamina.get());
+        SLUtil.setBase(player, ModAttributes.STAMINA_REGEN, Config.SERVER.staminaRegenBase.get());
+        SLUtil.setBase(player, ModAttributes.MAX_EQUIP_LOAD, Config.SERVER.equipLoadBase.get());
 
         // Base HP penalty
         addMod(player, Attributes.MAX_HEALTH, ID_BASE_HEALTH,
@@ -109,6 +119,40 @@ public class AttributeEvents {
                 effDur * Config.SERVER.equipLoadPerDurability.get(), AttributeModifier.Operation.ADD_VALUE);
         addMod(player, ModAttributes.MAX_STAMINA, ID_DUR_STAMINA,
                 effDur * 0.25, AttributeModifier.Operation.ADD_VALUE);
+
+        // Heavy gear slows you down (depends on max load, so it is refreshed here too)
+        applyLoadSpeed(player);
+
+        // Max health may have dropped (base penalty) — never stay above it
+        if (player.getHealth() > player.getMaxHealth()) {
+            player.setHealth(player.getMaxHealth());
+        }
+    }
+
+    /**
+     * Movement-speed penalty from equipment load:
+     * Light/Medium 0%, Heavy -10%, Overweight -40% (see EquipmentLoadState).
+     */
+    public static void applyLoadSpeed(Player player) {
+        PlayerSystemData d = player.getData(ModAttachments.PLAYER_SYSTEM_DATA);
+        AttributeInstance maxLoadAttr = player.getAttribute(ModAttributes.MAX_EQUIP_LOAD);
+        double maxLoad = maxLoadAttr != null ? maxLoadAttr.getValue() : 30.0;
+        double ratio = maxLoad > 0 ? d.currentEquipLoad() / maxLoad : 0;
+        double mult = EquipmentLoadState.fromRatio(ratio).moveSpeedMultiplier;
+
+        AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speed == null) return;
+
+        AttributeModifier existing = speed.getModifier(ID_LOAD_SPEED);
+        if (Math.abs(mult) < 1e-6) {
+            if (existing != null) speed.removeModifier(ID_LOAD_SPEED);
+            return;
+        }
+        if (existing != null && Math.abs(existing.amount() - mult) < 1e-9) return;
+
+        speed.removeModifier(ID_LOAD_SPEED);
+        speed.addPermanentModifier(new AttributeModifier(
+                ID_LOAD_SPEED, mult, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
     }
 
     private static void addMod(Player player, Holder<Attribute> attr, ResourceLocation id,

@@ -1,6 +1,45 @@
 {
-  "item.sololeveling.system_key": "System Key",
+  "item.sololeveling.system_key": "System Key: Basic",
+  "item.sololeveling.system_key.desc1": "Right-click to open the gate to the Tutorial Dungeon.",
+  "item.sololeveling.system_key.desc2": "Right-click again inside the dungeon to return.",
+  "item.sololeveling.system_key.desc3": "The gate stays sealed while the boss is alive.",
+  "item.sololeveling.system_key.desc4": "You can only carry one.",
+
+  "item.sololeveling.system_key_lost_cave": "System Key: Lost Cave",
+  "item.sololeveling.system_key_lost_cave.desc1": "The key to the Lost Cave.",
+  "item.sololeveling.system_key_lost_cave.desc2": "Its gate is not open yet. A new dungeon is coming.",
+
+  "item.sololeveling.system_key_replay": "System Key: Replay",
+  "item.sololeveling.system_key_replay.desc1": "Right-click the Rift Stone in the Bonfire camp.",
+  "item.sololeveling.system_key_replay.desc2": "The Tutorial Dungeon starts again for everyone inside.",
+  "item.sololeveling.system_key_replay.desc3": "Used up when the Rift opens.",
+
+  "item.sololeveling.zombie_crystal": "Zombie Crystal",
+  "item.sololeveling.zombie_crystal.desc": "Currency of the Bonfire merchants.",
+
+  "item.sololeveling.zombie_king_crystal": "Zombie King Crystal",
+  "item.sololeveling.zombie_king_crystal.desc": "A rare core torn from the Zombie King. Premium currency.",
+
+  "item.sololeveling.health_potion": "Health Potion",
+  "item.sololeveling.health_potion.desc": "Restores 4 hearts.",
+
+  "item.sololeveling.greater_health_potion": "Greater Health Potion",
+  "item.sololeveling.greater_health_potion.desc": "Fully restores your health.",
+
+  "item.sololeveling.stamina_potion": "Stamina Potion",
+  "item.sololeveling.stamina_potion.desc": "Fully restores stamina and ends exhaustion.",
+
+  "item.sololeveling.mana_potion": "Mana Potion",
+  "item.sololeveling.mana_potion.desc": "Fully restores mana.",
+
+  "item.sololeveling.magic_paper": "Magic Paper",
+  "item.sololeveling.magic_paper.named": "Magic Paper: %s",
+
+  "item.sololeveling.dungeon_key": "Dungeon Key",
+  "item.sololeveling.dungeon_key.named": "Dungeon Key: %s",
+
   "creativetab.sololeveling.solo_leveling_tab": "Solo Leveling",
+
   "attribute.sololeveling.max_mana": "Max Mana",
   "attribute.sololeveling.mana_regen": "Mana Regeneration",
   "attribute.sololeveling.max_stamina": "Max Stamina",
@@ -9,6 +48,14 @@
   "attribute.sololeveling.poise": "Poise",
   "attribute.sololeveling.effect_resistance": "Effect Resistance",
   "attribute.sololeveling.physical_damage_reduction": "Physical Damage Reduction",
+
   "key.categories.sololeveling": "Solo Leveling",
-  "key.sololeveling.open_panel": "Open System Panel"
+  "key.sololeveling.open_panel": "Open System Panel",
+  "key.sololeveling.open_skills": "Open Skill Tree",
+  "key.sololeveling.slot_1": "Action Slot 1",
+  "key.sololeveling.slot_2": "Action Slot 2",
+  "key.sololeveling.slot_3": "Action Slot 3",
+  "key.sololeveling.slot_4": "Action Slot 4",
+  "key.sololeveling.slot_5": "Action Slot 5",
+  "key.sololeveling.slot_6": "Action Slot 6"
 }

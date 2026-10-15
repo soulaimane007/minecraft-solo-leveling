@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:book" },
+    { "item": "minecraft:amethyst_shard" },
+    { "item": "minecraft:gold_ingot" }
+  ],
+  "result": {
+    "count": 1,
+    "id": "sololeveling:system_key"
+  }
+}

@@ -1,7 +1,7 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
-issueTrackerURL="https://github.com/yourname/sololeveling/issues"
+issueTrackerURL="https://github.com/soulaimane007/minecraft-solo-leveling/issues"
 
 [[mods]]
 modId="${mod_id}"
@@ -10,6 +10,7 @@ displayName="${mod_name}"
 authors="${mod_authors}"
 description='''${mod_description}'''
 logoFile="sololeveling.png"
+displayURL="https://github.com/soulaimane007/minecraft-solo-leveling"
 
 [[dependencies.${mod_id}]]
 modId="neoforge"

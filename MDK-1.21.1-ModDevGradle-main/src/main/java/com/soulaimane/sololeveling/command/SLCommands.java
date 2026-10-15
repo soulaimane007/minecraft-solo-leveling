@@ -9,7 +9,9 @@ import com.soulaimane.sololeveling.data.ModDataMaps;
 import com.soulaimane.sololeveling.data.PlayerSystemData;
 import com.soulaimane.sololeveling.event.AttributeEvents;
 import com.soulaimane.sololeveling.event.DexterityEvents;
+import com.soulaimane.sololeveling.event.ManaEvents;
 import com.soulaimane.sololeveling.event.PlayerDataEvents;
+import com.soulaimane.sololeveling.event.StaminaEvents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -96,8 +98,8 @@ public class SLCommands {
                                             "§eSTR: §f" + x.strength() + "  §eAGI: §f" + x.agility() + "  §eVIT: §f" + x.vitality() + "\n" +
                                             "§eINT: §f" + x.intelligence() + "  §eSEN: §f" + x.sense() + "\n" +
                                             "§eDEX: §f" + x.dexterity() + "  §eDUR: §f" + x.durability() + "\n" +
-                                            "§eStamina: §f" + String.format("%.1f", x.stamina()) + "/" + PlayerSystemData.MAX_STAMINA + "\n" +
-                                            "§eMana: §f" + String.format("%.1f", x.mana()) + "/" + PlayerSystemData.MAX_MANA + "\n" +
+                                            "§eStamina: §f" + String.format("%.1f", x.stamina()) + "/" + String.format("%.0f", StaminaEvents.getMaxStamina(p)) + "\n" +
+                                            "§eMana: §f" + String.format("%.1f", x.mana()) + "/" + String.format("%.0f", ManaEvents.getMaxMana(p)) + "\n" +
                                             "§eLoad: §f" + String.format("%.1f", x.currentEquipLoad()) + "\n" +
                                             "§eExhausted: §f" + x.exhausted()
                             ), false);
@@ -154,10 +156,12 @@ public class SLCommands {
                 // ── /sl stamina set <n> ──
                 .then(Commands.literal("stamina")
                         .then(Commands.literal("set")
-                                .then(Commands.argument("n", FloatArgumentType.floatArg(0, PlayerSystemData.MAX_STAMINA))
+                                .then(Commands.argument("n", FloatArgumentType.floatArg(0))
                                         .executes(ctx -> {
                                             ServerPlayer p = ctx.getSource().getPlayerOrException();
-                                            float n = FloatArgumentType.getFloat(ctx, "n");
+                                            // never above the player's real maximum
+                                            float n = Math.min(FloatArgumentType.getFloat(ctx, "n"),
+                                                    StaminaEvents.getMaxStamina(p));
                                             PlayerSystemData old = p.getData(ModAttachments.PLAYER_SYSTEM_DATA);
                                             p.setData(ModAttachments.PLAYER_SYSTEM_DATA,
                                                     old.withStamina(n).withExhausted(false));
@@ -170,10 +174,12 @@ public class SLCommands {
                 // ── /sl mana set <n> ──
                 .then(Commands.literal("mana")
                         .then(Commands.literal("set")
-                                .then(Commands.argument("n", FloatArgumentType.floatArg(0, PlayerSystemData.MAX_MANA))
+                                .then(Commands.argument("n", FloatArgumentType.floatArg(0))
                                         .executes(ctx -> {
                                             ServerPlayer p = ctx.getSource().getPlayerOrException();
-                                            float n = FloatArgumentType.getFloat(ctx, "n");
+                                            // never above the player's real maximum (Intelligence raises it)
+                                            float n = Math.min(FloatArgumentType.getFloat(ctx, "n"),
+                                                    ManaEvents.getMaxMana(p));
                                             PlayerSystemData old = p.getData(ModAttachments.PLAYER_SYSTEM_DATA);
                                             p.setData(ModAttachments.PLAYER_SYSTEM_DATA, old.withMana(n));
                                             PlayerDataEvents.syncToClient(p);
@@ -192,6 +198,16 @@ public class SLCommands {
                             ctx.getSource().sendSuccess(() ->
                                     Component.literal("[System] Reset."), false);
                             return 1;
-                        })));
+                        }))
+
+                // ── /sl skill list|unlock|set|reset|points ──
+                .then(SkillCommands.build())
+
+                // ── /sl magic list|give|learn|forget|forgetall ──
+                .then(MagicCommands.build())
+
+                // ── /sl dungeon status|enter|leave|key|boss|clear|rebuild|reset  (Tutorial Dungeon)
+                //             and list|give|enter <id>|skip|end|progress          (dungeon engine) ──
+                .then(DungeonCommands.build()));
     }
 }

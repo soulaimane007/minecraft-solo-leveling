@@ -35,8 +35,9 @@ public record AllocateStatsPayload(
     @Override
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    public int totalCost() {
-        return Math.max(0, dStrength) + Math.max(0, dAgility) + Math.max(0, dVitality)
+    /** Total stat points requested. Long math so a forged packet cannot overflow it. */
+    public long totalCost() {
+        return (long) Math.max(0, dStrength) + Math.max(0, dAgility) + Math.max(0, dVitality)
                 + Math.max(0, dIntelligence) + Math.max(0, dSense)
                 + Math.max(0, dDexterity) + Math.max(0, dDurability);
     }

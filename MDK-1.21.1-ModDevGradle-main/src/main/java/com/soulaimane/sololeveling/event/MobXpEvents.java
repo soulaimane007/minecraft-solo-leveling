@@ -1,8 +1,8 @@
 package com.soulaimane.sololeveling.event;
 
-import com.soulaimane.sololeveling.ModAttachments;
 import com.soulaimane.sololeveling.data.ModDataMaps;
-import com.soulaimane.sololeveling.data.PlayerSystemData;
+import com.soulaimane.sololeveling.dungeon.DungeonManager;
+import com.soulaimane.sololeveling.dungeon.engine.DungeonEngine;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -38,14 +38,19 @@ public class MobXpEvents {
         int xp = resolveXpValue(killed);
         if (xp <= 0) return;
 
-        PlayerSystemData old = killer.getData(ModAttachments.PLAYER_SYSTEM_DATA);
-        PlayerSystemData updated = old.addXp(xp);
-        killer.setData(ModAttachments.PLAYER_SYSTEM_DATA, updated);
-
-        PlayerDataEvents.syncToClient(killer);
+        // Goes through the shared path: level-up message/title/sound + client sync
+        PlayerDataEvents.giveSystemXp(killer, xp);
     }
 
     private static int resolveXpValue(LivingEntity entity) {
+        // Dungeon mobs have their own (configurable) values; the boss pays out separately.
+        int dungeonXp = DungeonManager.xpOverride(entity);
+        if (dungeonXp >= 0) return dungeonXp;
+
+        // Mobs of the dungeon engine (v0.5.0 dungeons) carry their XP in a tag, set by their MobSpec
+        int engineXp = DungeonEngine.xpOverride(entity);
+        if (engineXp >= 0) return engineXp;
+
         EntityType<?> type = entity.getType();
 
         Integer override = type.builtInRegistryHolder().getData(ModDataMaps.MOB_XP);

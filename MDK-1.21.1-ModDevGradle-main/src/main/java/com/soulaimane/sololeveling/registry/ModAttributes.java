@@ -18,7 +18,7 @@ public class ModAttributes {
 
     public static final DeferredHolder<Attribute, Attribute> MANA_REGEN =
             ATTRIBUTES.register("mana_regen", () -> new RangedAttribute(
-                    "attribute.sololeveling.mana_regen", 0.0, 0.0, 10000.0).setSyncable(true));
+                    "attribute.sololeveling.mana_regen", 1.0, 0.0, 10000.0).setSyncable(true));
 
     public static final DeferredHolder<Attribute, Attribute> MAX_STAMINA =
             ATTRIBUTES.register("max_stamina", () -> new RangedAttribute(
@@ -26,7 +26,7 @@ public class ModAttributes {
 
     public static final DeferredHolder<Attribute, Attribute> STAMINA_REGEN =
             ATTRIBUTES.register("stamina_regen", () -> new RangedAttribute(
-                    "attribute.sololeveling.stamina_regen", 12.0, 0.0, 10000.0).setSyncable(true));
+                    "attribute.sololeveling.stamina_regen", 15.0, 0.0, 10000.0).setSyncable(true));
 
     public static final DeferredHolder<Attribute, Attribute> MAX_EQUIP_LOAD =
             ATTRIBUTES.register("max_equip_load", () -> new RangedAttribute(

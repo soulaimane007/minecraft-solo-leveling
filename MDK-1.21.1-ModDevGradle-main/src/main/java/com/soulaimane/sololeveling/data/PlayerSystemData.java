@@ -17,8 +17,9 @@ public record PlayerSystemData(
     public static final int XP_LINEAR_GROWTH    = 100;
     public static final int XP_QUADRATIC_GROWTH = 25;
 
+    /** Starting values — the real maximums come from the MAX_STAMINA / MAX_MANA attributes. */
     public static final float MAX_STAMINA = 100f;
-    public static final float MAX_MANA = 100f;
+    public static final float BASE_MANA   = 20f;
 
     public static int xpForNextLevel(int level) {
         long cost = XP_BASE_COST
@@ -39,7 +40,7 @@ public record PlayerSystemData(
     public static final PlayerSystemData DEFAULT = new PlayerSystemData(
             0, 0, Rank.E, 0,
             1, 1, 1, 1, 1, 1, 1,
-            MAX_STAMINA, MAX_MANA, 0, false, 0.0
+            MAX_STAMINA, BASE_MANA, 0, false, 0.0
     );
 
     // ─── Codec ────────────────────────────────────────────────────────

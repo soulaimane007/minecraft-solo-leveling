@@ -1,8 +1,10 @@
 package com.soulaimane.sololeveling.event;
 
 import com.soulaimane.sololeveling.ModAttachments;
+import com.soulaimane.sololeveling.client.ClientSystemDataCache;
 import com.soulaimane.sololeveling.data.ModDataMaps;
 import com.soulaimane.sololeveling.data.PlayerSystemData;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -25,6 +27,10 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class DexterityEvents {
 
     private static final EquipmentSlot[] SLOTS = {
@@ -43,9 +49,7 @@ public class DexterityEvents {
         ItemStack held = p.getMainHandItem();
         if (isRestricted(p, held)) {
             e.setCanceled(true);
-            p.displayClientMessage(Component.literal(
-                    "§c[System] " + held.getHoverName().getString()
-                            + " requires Dexterity " + getRequirement(held)), true);
+            notifyRestricted(p, held, true);
         }
     }
 
@@ -59,9 +63,7 @@ public class DexterityEvents {
         ItemStack held = p.getItemInHand(e.getHand());
         if (isRestricted(p, held)) {
             e.setCanceled(true);
-            p.displayClientMessage(Component.literal(
-                    "§c[System] " + held.getHoverName().getString()
-                            + " requires Dexterity " + getRequirement(held)), true);
+            notifyRestricted(p, held, true);
         }
     }
 
@@ -71,9 +73,7 @@ public class DexterityEvents {
         ItemStack held = p.getItemInHand(e.getHand());
         if (isRestricted(p, held)) {
             e.setCanceled(true);
-            p.displayClientMessage(Component.literal(
-                    "§c[System] " + held.getHoverName().getString()
-                            + " requires Dexterity " + getRequirement(held)), true);
+            notifyRestricted(p, held, true);
         }
     }
 
@@ -88,7 +88,7 @@ public class DexterityEvents {
         ItemStack stack = e.getTo();
         if (stack.isEmpty()) return;
         if (isRestricted(p, stack)) {
-            unequip(p, slot, stack);
+            unequip(p, slot, stack, true);
         }
     }
 
@@ -103,7 +103,9 @@ public class DexterityEvents {
             ItemStack stack = p.getItemBySlot(slot);
             if (stack.isEmpty()) continue;
             if (isRestricted(p, stack)) {
-                unequip(p, slot, stack);
+                // Action bar only: this path can repeat every tick (for instance when the hotbar is full
+                // and the item lands straight back in the hand), so it must not flood the chat.
+                unequip(p, slot, stack, false);
             }
         }
     }
@@ -123,13 +125,16 @@ public class DexterityEvents {
             e.getToolTip().add(Component.literal("§7Weight: §f" + String.format("%.1f", weight)));
         }
         if (req > 0) {
-            boolean restricted = true;
-            if (e.getEntity() instanceof Player p) {
-                PlayerSystemData d = p.getData(ModAttachments.PLAYER_SYSTEM_DATA);
-                restricted = d.dexterity() < req;
+            // The tooltip is built on the client, where the real Dexterity lives in ClientSystemDataCache
+            // (the attachment copy on the client side is not synced).
+            int have = ClientSystemDataCache.dexterity;
+            if (have < req) {
+                e.getToolTip().add(Component.literal("§cRequires Dexterity " + req
+                        + " §7(you have " + have + ", " + (req - have) + " more needed)"));
+            } else {
+                e.getToolTip().add(Component.literal("§aRequires Dexterity " + req
+                        + " §7(you have " + have + ")"));
             }
-            e.getToolTip().add(Component.literal(
-                    (restricted ? "§c" : "§a") + "Requires Dexterity " + req));
         }
     }
 
@@ -137,7 +142,42 @@ public class DexterityEvents {
     // HELPERS
     // ─────────────────────────────────────────────────────────────────
 
-    private static void unequip(ServerPlayer p, EquipmentSlot slot, ItemStack stack) {
+    /** Ticks between two chat copies of the "requires Dexterity" message for the same player. */
+    private static final int CHAT_COOLDOWN_TICKS = 60;
+    private static final Map<UUID, Long> LAST_CHAT = new HashMap<>();
+
+    /**
+     * "[System] Iron Sword requires Dexterity 5 (you have 1, 4 more needed)."
+     * Built from Components so the item name is translated on the player's own client.
+     */
+    public static Component requirementMessage(Player p, ItemStack stack) {
+        int req = getRequirement(stack);
+        int have = p.getData(ModAttachments.PLAYER_SYSTEM_DATA).dexterity();
+        int missing = Math.max(0, req - have);
+        return Component.literal("[System] ").withStyle(ChatFormatting.RED)
+                .append(stack.getHoverName())
+                .append(Component.literal(" requires Dexterity " + req
+                        + " (you have " + have + ", " + missing + " more needed)."));
+    }
+
+    /**
+     * Tells the player what is missing: always on the action bar, and (if asked) in the chat too, at most once
+     * every 3 seconds, because the action bar line is easily replaced by other messages.
+     */
+    private static void notifyRestricted(ServerPlayer p, ItemStack stack, boolean alsoInChat) {
+        Component msg = requirementMessage(p, stack);
+        p.displayClientMessage(msg, true);
+        if (!alsoInChat) return;
+
+        long now = p.level().getGameTime();
+        Long last = LAST_CHAT.get(p.getUUID());
+        if (last == null || now < last || now - last >= CHAT_COOLDOWN_TICKS) {
+            LAST_CHAT.put(p.getUUID(), now);
+            p.displayClientMessage(msg, false);
+        }
+    }
+
+    private static void unequip(ServerPlayer p, EquipmentSlot slot, ItemStack stack, boolean alsoInChat) {
         ItemStack toReturn = stack.copy();
 
         // Clear the slot first
@@ -152,9 +192,7 @@ public class DexterityEvents {
             p.drop(toReturn, false);
         }
 
-        p.displayClientMessage(Component.literal(
-                "§c[System] " + toReturn.getHoverName().getString()
-                        + " requires Dexterity " + getRequirement(toReturn)), true);
+        notifyRestricted(p, toReturn, alsoInChat);
     }
 
     public static boolean isRestricted(Player p, ItemStack stack) {
